@@ -31,7 +31,7 @@ jmespath==0.9.4
 joblib==0.13.2
 jsbeautifier==1.6.2
 jsonschema==3.2.0
-lightgbm==2.1.2
+lightgbm==3.3.2
 maxminddb==1.5.4
 more-itertools==7.2.0
 msoffcrypto-tool==4.10.1
