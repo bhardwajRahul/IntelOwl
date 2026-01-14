@@ -1,5 +1,7 @@
 # This file is a part of IntelOwl https://github.com/intelowlproject/IntelOwl
 # See the file 'LICENSE' for copying permission.
+# pylint: disable=cyclic-import
+# Reason: Harmless in Django due to bidirectional model relationships; resolved lazily at runtime via app registry
 import datetime
 import json
 import logging
@@ -46,6 +48,7 @@ from api_app.choices import (
 if typing.TYPE_CHECKING:
     from api_app.classes import Plugin
 
+from api_app.decorators import classproperty
 from api_app.defaults import default_runtime
 from api_app.helpers import deprecated, get_now
 from api_app.queryset import (
@@ -1200,8 +1203,7 @@ class ListCachable(models.Model):
             logger.debug(f"Deleting cache key {key}")
             cache.delete(key)
 
-    @classmethod
-    @property
+    @classproperty
     def python_path(cls) -> str:
         """
         Returns the Python path of the class.
@@ -1285,8 +1287,7 @@ class AbstractConfig(ListCachable):
         """
         return self.orgs_configuration.filter(disabled=True)
 
-    @classmethod
-    @property
+    @classproperty
     def runtime_configuration_key(cls) -> str:
         """
         Returns the runtime configuration key for the configuration.
@@ -1296,8 +1297,7 @@ class AbstractConfig(ListCachable):
         """
         return f"{cls.__name__.split('Config')[0].lower()}s"
 
-    @classmethod
-    @property
+    @classproperty
     def snake_case_name(cls) -> str:
         """
         Returns the snake_case name of the configuration.
@@ -1386,8 +1386,7 @@ class AbstractReport(models.Model):
         """Returns a string representation of the report."""
         return f"{self.__class__.__name__}(job:#{self.job_id}, {self.config.name})"
 
-    @classmethod
-    @property
+    @classproperty
     def config(cls) -> "AbstractConfig":
         """
         Returns the configuration associated with the report.
@@ -1526,8 +1525,7 @@ class PythonConfig(AbstractConfig):
         """
         return Parameter.objects.filter(python_module=self.python_module)
 
-    @classmethod
-    @property
+    @classproperty
     def report_class(cls) -> Type[AbstractReport]:
         """
         Returns the report class associated with the plugin configuration.
@@ -1552,8 +1550,7 @@ class PythonConfig(AbstractConfig):
             if (model is not None and issubclass(model, cls) and model is not cls)
         ]
 
-    @classmethod
-    @property
+    @classproperty
     def plugin_type(cls) -> str:
         """
         Returns the type of the plugin.
@@ -1633,8 +1630,7 @@ class PythonConfig(AbstractConfig):
                     child=self.serializer_class()
                 ).to_representation_single_plugin(self, generic_user)
 
-    @classmethod
-    @property
+    @classproperty
     def serializer_class(cls) -> Type["PythonConfigSerializer"]:
         """
         Returns the serializer class associated with the plugin configuration.
@@ -1644,8 +1640,7 @@ class PythonConfig(AbstractConfig):
         """
         raise NotImplementedError()
 
-    @classmethod
-    @property
+    @classproperty
     def plugin_name(cls) -> str:
         """
         Returns the name of the plugin.
@@ -1760,8 +1755,7 @@ class PythonConfig(AbstractConfig):
         pc = self.__class__.objects.filter(pk=self.pk).annotate_configured(user).first()
         return pc.configured
 
-    @classmethod
-    @property
+    @classproperty
     def config_exception(cls):
         """
         Returns the exception class for configuration errors.
