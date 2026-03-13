@@ -335,3 +335,43 @@ class AnalyzerRulesFileVersion(models.Model):
     downloaded_at = models.DateTimeField(auto_now_add=True)
 
     python_module = models.ForeignKey(PythonModule, on_delete=models.PROTECT, related_name="rules_version")
+
+
+class LocalAnalyzerDBEntry(models.Model):
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class TorExitNode(LocalAnalyzerDBEntry):
+    ip = models.GenericIPAddressField(db_index=True, unique=True)
+
+    class Meta:
+        verbose_name = "Tor Exit Node"
+        verbose_name_plural = "Tor Exit Nodes"
+
+    def __str__(self):
+        return self.ip
+
+
+class TorDanMeUKNode(LocalAnalyzerDBEntry):
+    ip = models.GenericIPAddressField(db_index=True, unique=True)
+
+    class Meta:
+        verbose_name = "Tor DanMeUK Node"
+        verbose_name_plural = "Tor DanMeUK Nodes"
+
+    def __str__(self):
+        return self.ip
+
+
+class PhishingArmyDomain(LocalAnalyzerDBEntry):
+    domain = models.CharField(max_length=255, db_index=True, unique=True)
+
+    class Meta:
+        verbose_name = "Phishing Army Domain"
+        verbose_name_plural = "Phishing Army Domains"
+
+    def __str__(self):
+        return self.domain

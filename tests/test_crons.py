@@ -16,6 +16,7 @@ from api_app.analyzers_manager.observable_analyzers import (
     phishing_army,
     talos,
     tor,
+    tor_nodes_danmeuk,
     tweetfeeds,
 )
 from api_app.choices import Classification, PythonModuleBasePaths
@@ -94,15 +95,46 @@ class CronTests(CustomTestCase):
         db_file_path = talos.Talos.update()
         self.assertTrue(os.path.exists(db_file_path))
 
-    @if_mock_connections(patch("requests.get", return_value=MockUpResponse({}, 200, text="91.192.100.61")))
+    @if_mock_connections(
+        patch(
+            "requests.get",
+            return_value=MockUpResponse(
+                {}, 200, content=b"# Phishing Army Blocklist\nexample.com\nevil-phishing.net\nbadsite.org\n"
+            ),
+        )
+    )
     def test_phishing_army_updater(self, mock_get=None):
-        db_file_path = phishing_army.PhishingArmy.update()
-        self.assertTrue(os.path.exists(db_file_path))
+        from api_app.analyzers_manager.models import PhishingArmyDomain
 
-    @if_mock_connections(patch("requests.get", return_value=MockUpResponse({}, 200, text="93.95.230.253")))
+        result = phishing_army.PhishingArmy.update()
+        self.assertTrue(result)
+        self.assertTrue(PhishingArmyDomain.objects.exists())
+
+    @if_mock_connections(
+        patch(
+            "requests.get",
+            return_value=MockUpResponse({}, 200, content=b"ExitAddress 93.95.230.253 2022-08-18 14:44:33"),
+        )
+    )
     def test_tor_updater(self, mock_get=None):
-        db_file_path = tor.Tor.update()
-        self.assertTrue(os.path.exists(db_file_path))
+        from api_app.analyzers_manager.models import TorExitNode
+
+        result = tor.Tor.update()
+        self.assertTrue(result)
+        self.assertTrue(TorExitNode.objects.exists())
+
+    @if_mock_connections(
+        patch(
+            "requests.get",
+            return_value=MockUpResponse({}, 200, content=b"100.10.37.131\n100.14.156.183\n45.141.119.113\n"),
+        )
+    )
+    def test_tor_nodes_danmeuk_updater(self, mock_get=None):
+        from api_app.analyzers_manager.models import TorDanMeUKNode
+
+        result = tor_nodes_danmeuk.TorNodesDanMeUK.update()
+        self.assertTrue(result)
+        self.assertTrue(TorDanMeUKNode.objects.exists())
 
     @if_mock_connections(
         patch(
