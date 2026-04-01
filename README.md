@@ -68,7 +68,7 @@ You can see the full list of all available analyzers in the [documentation](http
 
 As open source project maintainers, we strongly rely on external support to get the resources and time to work on keeping the project alive, with a constant release of new features, bug fixes and general improvements.
 
-Because of this, we joined [Open Collective](https://opencollective.com/intelowl-project) to obtain US and EU non-profit equal level status which allows the organization to receive and manage donations transparently and with tax exemption. Please support IntelOwl and all the community by choosing a plan (BRONZE, SILVER, etc).
+Because of this, we joined [Open Collective](https://opencollective.com/intelowl-project) to obtain US and EU non-profit equal level status which allows the organization to receive and manage donations transparently and with tax exemption. Please support IntelOwl and all the community.
 
 <a href="https://opencollective.com/intelowl-project/donate" target="_blank">
   <img src="https://opencollective.com/intelowl-project/donate/button@2x.png?color=blue" width=200 />
@@ -113,8 +113,8 @@ In 2022 IntelOwl joined the official [DigitalOcean Open Source Program](https://
 
 Feel free to contact the main developers at any time on Twitter:
 
-- [Matteo Lodi](https://twitter.com/matte_lodi): Author, Advisor and Administrator
-- [Daniele Rosetti](https://github.com/drosetti): Administrator and Frontend Maintainer
-- [Simone Berni](https://twitter.com/0ssig3no): Backend Maintainer
+- [Matteo Lodi](https://twitter.com/matte_lodi): Author and Principal Maintainer
+- [Daniele Rosetti](https://github.com/drosetti): Frontend Maintainer
 - [Federico Gibertoni](https://x.com/fgibertoni1): Maintainer and Community Assistant
+- [Simone Berni](https://twitter.com/0ssig3no): Key Contributor
 - [Eshaan Bansal](https://twitter.com/eshaan7_): Key Contributor

@@ -2,6 +2,9 @@
 
 [**Upgrade Guide**](https://intelowlproject.github.io/docs/IntelOwl/installation/#update-to-the-most-recent-version)
 
+## [v6.6.0](https://github.com/intelowlproject/IntelOwl/releases/tag/v6.6.0)
+A lot of minor contributions to fix bugs and improve maintenance plus some new visualizers and analyzers improvements
+
 ## [v6.5.1](https://github.com/intelowlproject/IntelOwl/releases/tag/v6.5.1)
 A lot of minor contributions to fix bugs and improve maintenance
 
