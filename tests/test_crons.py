@@ -292,7 +292,7 @@ class CronTests(CustomTestCase):
             def create_yara_file(path):
                 os.makedirs(path, exist_ok=True)
                 yara_file = os.path.join(path, "test_rule.yar")
-                with open(yara_file, "w") as f:
+                with open(yara_file, "w", encoding="utf_8") as f:
                     f.write(
                         "rule TestRule {\n"
                         "    strings:\n"
