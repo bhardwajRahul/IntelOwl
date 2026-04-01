@@ -48,7 +48,7 @@ class MachoInfo(FileAnalyzer):
                 return macho
             except Exception as universal_error:
                 raise AnalyzerRunException(
-                    f"Failed to parse as both single and universal binary. "
+                    "Failed to parse as both single and universal binary. "
                     f"Single: {e}, Universal: {universal_error}"
                 )
 
