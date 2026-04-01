@@ -82,7 +82,7 @@ class InQuest(ObservableAnalyzer):
 
         # Default to filename with warning for unrecognized patterns
         logger.warning(
-            f"Could not determine type of generic observable: "
+            "Could not determine type of generic observable: "
             f"'{self.observable_name}'. Defaulting to 'filename'."
         )
         return "filename"
