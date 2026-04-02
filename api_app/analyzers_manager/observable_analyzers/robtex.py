@@ -40,7 +40,7 @@ class Robtex(classes.ObservableAnalyzer):
         for uri in uris:
             response = requests.get(self.url + uri)
             response.raise_for_status()
-            result = response.text.split("\r\n")
+            result = response.text.splitlines()
             for item in result:
                 if len(item) > 0:
                     loaded_results.append(json.loads(item))
