@@ -8,7 +8,7 @@ ENV PROJECT_PATH=/app
 RUN adduser -D -h /home/${USER} ${USER}
 
 # Install required packages using apk and clean cache in the same layer
-RUN apk add --no-cache python3 py3-pip
+RUN apk add --no-cache python3 py3-pip gosu
 
 # Create working directory and set ownership
 WORKDIR /app

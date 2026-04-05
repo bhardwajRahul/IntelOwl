@@ -2,6 +2,9 @@
 
 [**Upgrade Guide**](https://intelowlproject.github.io/docs/IntelOwl/installation/#update-to-the-most-recent-version)
 
+## [v6.6.0](https://github.com/intelowlproject/IntelOwl/releases/tag/v6.6.0)
+A lot of minor contributions to fix bugs and improve maintenance plus some new visualizers and analyzers improvements
+
 ## [v6.5.1](https://github.com/intelowlproject/IntelOwl/releases/tag/v6.5.1)
 A lot of minor contributions to fix bugs and improve maintenance
 
@@ -620,7 +623,7 @@ We are proud to announce two new sponsorships today!
 If you are interested in helping the project through a donation, read [here](https://github.com/intelowlproject/IntelOwl/blob/master/.github/partnership_and_sponsors.md) how you can do it!
 
 **New/Improved Analyzers:**
-- New [CyberChef](https://gchq.githuba.io/CyberChef/) Analyzer! Run your own recipes in IntelOwl! Check the [docs](https://intelowlproject.github.io/docs/advanced_usage/#cyberchef)!
+- New [CyberChef](https://gchq.github.io/CyberChef/) Analyzer! Run your own recipes in IntelOwl! Check the [docs](https://intelowlproject.github.io/docs/advanced_usage/#cyberchef)!
 
 **Other:**
 - fixes: [#931](https://github.com/intelowlproject/IntelOwl/issues/931)

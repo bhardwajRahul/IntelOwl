@@ -4,7 +4,9 @@ FROM jasonish/suricata:7.0
 ENV PROJECT_PATH=/opt/deploy
 ENV LOG_PATH=/var/log/intel_owl/pcap_analyzers
 ENV USER=pcap_analyzers-user
-RUN dnf -y install python3-pip && dnf clean all && useradd -ms /bin/bash ${USER}
+RUN dnf -y install python3-pip wget && dnf clean all && useradd -ms /bin/bash ${USER} \
+    && wget -q -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/1.19/gosu-amd64" \
+    && chmod +x /usr/local/bin/gosu
 
 # Build Flask REST API
 WORKDIR ${PROJECT_PATH}/pcap_analyzers-flask
@@ -13,8 +15,8 @@ COPY check_pcap.py update_signatures.sh /
 COPY crontab /etc/cron.d/suricata
 # adding Suricata config files and sigs
 # these copies are required in case a Docker Volume is used instead of a Bind volume (Swarm deployments)
-COPY config/suricata/etc/* /etc/suricata
-COPY config/suricata/rules/* /var/lib/suricata/rules
+COPY config/suricata/etc/* /etc/suricata/
+COPY config/suricata/rules/* /var/lib/suricata/rules/
 
 RUN pip3 install -r requirements.txt --no-cache-dir \
     && chown -R ${USER}:${USER} . /etc/suricata /var/lib/suricata \

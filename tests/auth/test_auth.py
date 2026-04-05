@@ -8,6 +8,7 @@ from django.core.cache import cache
 from django.test import tag
 from rest_email_auth.models import EmailConfirmation, PasswordResetToken
 from rest_framework.reverse import reverse
+from rest_framework.test import APIClient
 
 from . import CustomOAuthTestCase
 
@@ -20,6 +21,7 @@ resend_verificaton_uri = reverse("auth_resend-verification")
 request_pwd_reset_uri = reverse("auth_request-password-reset")
 reset_pwd_uri = reverse("auth_reset-password")
 configuration = reverse("auth_configuration")
+change_password_uri = reverse("auth_changepassword")
 
 
 @tag("api", "user")
@@ -39,6 +41,8 @@ class TestUserAuth(CustomOAuthTestCase):
                 "discover_from": "other",
             },
         }
+        self.user.set_password("hunter2")
+        self.user.save()
         mail.outbox = []
 
     def tearDown(self):  # skipcq: PYL-R0201
@@ -227,6 +231,117 @@ class TestUserAuth(CustomOAuthTestCase):
         self.assertEqual(200, response.status_code, msg=msg)
         user.refresh_from_db()
         self.assertTrue(user.check_password(new_password), msg=msg)
+
+    def test_change_password_200(self):
+        new_password = "veryStrongPassword123"
+        from rest_framework.authtoken.models import Token
+
+        # Setup token
+        token, _ = Token.objects.get_or_create(user=self.user)
+        token_key = token.key
+        self.assertEqual(Token.objects.filter(user=self.user).count(), 1)
+
+        # Verify token works before password change
+        protected_url = reverse("system-update-check")
+        token_client = APIClient()
+        token_client.credentials(HTTP_AUTHORIZATION=f"Token {token_key}")
+        pre_response = token_client.get(protected_url)
+        self.assertEqual(200, pre_response.status_code, msg="Token should be valid before password change")
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            change_password_uri,
+            {
+                "old_password": "hunter2",
+                "new_password": new_password,
+            },
+        )
+        self.assertEqual(200, response.status_code)
+
+        # Verify token is deleted from DB
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(new_password), msg="Password should be changed successfully")
+        self.assertEqual(
+            Token.objects.filter(user=self.user).count(),
+            0,
+            msg="Tokens should be invalidated after password change",
+        )
+
+        # Verify token returns 401 after password change
+        post_response = token_client.get(protected_url)
+        self.assertEqual(
+            401, post_response.status_code, msg="Old token should return 401 after password change"
+        )
+
+    def test_change_password_session_invalidation(self):
+        new_password = "veryStrongPassword1234"
+        login_url = reverse("auth_login")
+        protected_url = reverse("system-update-check")
+
+        # 1. Log in with Client 1 (Session 1)
+        response1 = self.client.post(login_url, {"username": self.user.username, "password": "hunter2"})
+        self.assertEqual(200, response1.status_code, msg="Client 1 should log in successfully")
+
+        # 2. Log in with Client 2 (Session 2) - simulate another device
+        client2 = APIClient()
+        response2 = client2.post(login_url, {"username": self.user.username, "password": "hunter2"})
+        self.assertEqual(200, response2.status_code, msg="Client 2 should log in successfully")
+
+        # 2b. Verify Client 2 is authenticated before password change
+        pre_change_response = client2.get(protected_url)
+        self.assertEqual(
+            200,
+            pre_change_response.status_code,
+            msg="Client 2 should be authenticated before password change",
+        )
+
+        # 3. Change password using Client 1
+        response = self.client.post(
+            change_password_uri,
+            {
+                "old_password": "hunter2",
+                "new_password": new_password,
+            },
+        )
+        self.assertEqual(200, response.status_code)
+
+        # 4. Verify Client 1 is STILL authenticated (via current session preserved by update_session_auth_hash)
+        response = self.client.get(protected_url)
+        self.assertEqual(200, response.status_code, msg="Current session should remain valid")
+
+        # 5. Verify Client 2 is NO LONGER authenticated (other session invalidated by hash change)
+        response = client2.get(protected_url)
+        self.assertIn(response.status_code, (401, 403), msg="Other session should be invalidated")
+
+    def test_change_password_weak_password_400(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            change_password_uri,
+            {
+                "old_password": "hunter2",
+                "new_password": "weak",
+            },
+        )
+        content = response.json()
+        msg = (response, content)
+
+        self.assertEqual(400, response.status_code, msg=msg)
+        self.assertIn("Invalid password", content["error"], msg=msg)
+
+    def test_change_password_special_chars_400(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            change_password_uri,
+            {
+                "old_password": "hunter2",
+                "new_password": "intelowlintelowl$",
+            },
+        )
+        content = response.json()
+        msg = (response, content)
+
+        self.assertEqual(400, response.status_code, msg=msg)
+        self.assertIn("Invalid password", content["error"], msg=msg)
 
     def test_min_password_lenght_400(self):
         current_users = User.objects.count()

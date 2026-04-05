@@ -3,14 +3,15 @@
 FROM node:lts-alpine3.21 AS frontend-build
 
 WORKDIR /
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm install npm@11.11.0 --location=global && npm install
+
 # copy react source code
 COPY frontend/ .
 # copy version file as an env file
 COPY docker/.env .env.local
-# install and build
-RUN npm install npm@latest --location=global \
-    && npm install \
-    && PUBLIC_URL=/static/reactapp/ npm run build
+RUN PUBLIC_URL=/static/reactapp/ npm run build
 
 # Stage 2: Backend
 FROM python:3.11.7 AS backend-build
@@ -20,7 +21,6 @@ ENV DJANGO_SETTINGS_MODULE=intel_owl.settings
 ENV PYTHONPATH=/opt/deploy/intel_owl
 ENV LOG_PATH=/var/log/intel_owl
 ARG REPO_DOWNLOADER_ENABLED=true
-ARG WATCHMAN=false
 ARG TARGETARCH
 ENV watch_logs_cmd="watch -n1 tail -n10 /var/log/intel_owl/django/api_app.log"
 # This is required to allow compatibility with different OpenCTI instances
@@ -55,7 +55,7 @@ RUN pip3 install --no-cache-dir --use-pep517 --compile -r project-requirements.t
     && pip3 install --no-cache-dir pycti==${PYCTI_VERSION} \
     && pip3 install --no-cache-dir --compile -r certego-requirements.txt
 
-COPY . $PYTHONPATH
+COPY api_app/analyzers_manager/repo_downloader.sh ${PYTHONPATH}/api_app/analyzers_manager/repo_downloader.sh
 
 RUN touch ${LOG_PATH}/django/api_app.log ${LOG_PATH}/django/api_app_errors.log \
     && touch ${LOG_PATH}/django/intel_owl.log ${LOG_PATH}/django/intel_owl_errors.log \
@@ -64,11 +64,13 @@ RUN touch ${LOG_PATH}/django/api_app.log ${LOG_PATH}/django/api_app_errors.log \
     && touch ${LOG_PATH}/django/certego_saas.log ${LOG_PATH}/django/certego_saas_errors.log \
     && touch ${LOG_PATH}/django/authentication.log ${LOG_PATH}/django/authentication_errors.log \
     && touch ${LOG_PATH}/asgi/daphne.log \
-    && mkdir -p ${PYTHONPATH}/.cache \
-    && chown -R www-data:www-data ${LOG_PATH} /opt/deploy/ ${PYTHONPATH}/.cache \
-    && ${PYTHONPATH}/docker/scripts/watchman_install.sh \
+    && mkdir -p -m 755 ${PYTHONPATH}/.cache \
     # download github stuff
     && ${PYTHONPATH}/api_app/analyzers_manager/repo_downloader.sh
+
+COPY . $PYTHONPATH
+
+RUN chown -R www-data:www-data ${LOG_PATH} /opt/deploy/ ${PYTHONPATH}/.cache
 
 FROM backend-build
 

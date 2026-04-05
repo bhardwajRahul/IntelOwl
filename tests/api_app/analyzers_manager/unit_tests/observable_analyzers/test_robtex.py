@@ -12,7 +12,7 @@ class RobtexTestCase(BaseAnalyzerTest):
 
     @staticmethod
     def get_mocked_response():
-        mock_text = '{"test1":"test1"}\r\n{"test2":"test2"}'
+        mock_text = '{"test1":"test1"}\n{"test2":"test2"}'
         return patch("requests.get", return_value=MockUpResponse({}, 200, text=mock_text))
 
     @classmethod

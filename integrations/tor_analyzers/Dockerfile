@@ -9,7 +9,7 @@ RUN useradd -r -s /sbin/nologin ${USER}
 
 # update and install packages
 RUN DEBIAN_FRONTEND=noninteractive apt-get update -qq \
-    && apt-get install --no-install-recommends -y git build-essential gcc pandoc curl tor \
+    && apt-get install --no-install-recommends -y git build-essential gcc pandoc curl tor gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Place to bind a mount point to for scratch pad work

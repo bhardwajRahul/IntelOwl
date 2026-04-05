@@ -14,6 +14,7 @@ django-silk==5.4.3
 django-treebeard==4.7
 django-solo==2.4.0
 django_extensions==3.2.3
+django-watchfiles==1.4.0
 jsonschema==4.25.1
 # django rest framework libs
 Authlib==1.6.5
@@ -96,6 +97,7 @@ jbxapi==3.23.0
 yara-x==1.10.0
 flare-floss==3.1.1
 flare-capa==9.3.1
+machofile==2026.2.4
 
 # httpx required for HTTP/2 support (Mullvad DNS rejects HTTP/1.1 with protocol errors)
 httpx[http2]==0.28.1

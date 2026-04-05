@@ -16,6 +16,7 @@ from api_app.analyzers_manager.observable_analyzers import (
     phishing_army,
     talos,
     tor,
+    tor_nodes_danmeuk,
     tweetfeeds,
 )
 from api_app.choices import Classification, PythonModuleBasePaths
@@ -78,10 +79,10 @@ class CronTests(CustomTestCase):
 
         _job.finished_analysis_time = now() - datetime.timedelta(days=10)
         _job.save()
+        an_pk = an.pk
         self.assertEqual(remove_old_jobs(), 1)
-
-        _job.delete()
-        an.delete()
+        # verify orphaned analyzable is also cleaned up
+        self.assertFalse(Analyzable.objects.filter(pk=an_pk).exists())
 
     @if_mock_connections(skip("not working without connection"))
     def test_maxmind_updater(self):
@@ -94,15 +95,46 @@ class CronTests(CustomTestCase):
         db_file_path = talos.Talos.update()
         self.assertTrue(os.path.exists(db_file_path))
 
-    @if_mock_connections(patch("requests.get", return_value=MockUpResponse({}, 200, text="91.192.100.61")))
+    @if_mock_connections(
+        patch(
+            "requests.get",
+            return_value=MockUpResponse(
+                {}, 200, content=b"# Phishing Army Blocklist\nexample.com\nevil-phishing.net\nbadsite.org\n"
+            ),
+        )
+    )
     def test_phishing_army_updater(self, mock_get=None):
-        db_file_path = phishing_army.PhishingArmy.update()
-        self.assertTrue(os.path.exists(db_file_path))
+        from api_app.analyzers_manager.models import PhishingArmyDomain
 
-    @if_mock_connections(patch("requests.get", return_value=MockUpResponse({}, 200, text="93.95.230.253")))
+        result = phishing_army.PhishingArmy.update()
+        self.assertTrue(result)
+        self.assertTrue(PhishingArmyDomain.objects.exists())
+
+    @if_mock_connections(
+        patch(
+            "requests.get",
+            return_value=MockUpResponse({}, 200, content=b"ExitAddress 93.95.230.253 2022-08-18 14:44:33"),
+        )
+    )
     def test_tor_updater(self, mock_get=None):
-        db_file_path = tor.Tor.update()
-        self.assertTrue(os.path.exists(db_file_path))
+        from api_app.analyzers_manager.models import TorExitNode
+
+        result = tor.Tor.update()
+        self.assertTrue(result)
+        self.assertTrue(TorExitNode.objects.exists())
+
+    @if_mock_connections(
+        patch(
+            "requests.get",
+            return_value=MockUpResponse({}, 200, content=b"100.10.37.131\n100.14.156.183\n45.141.119.113\n"),
+        )
+    )
+    def test_tor_nodes_danmeuk_updater(self, mock_get=None):
+        from api_app.analyzers_manager.models import TorDanMeUKNode
+
+        result = tor_nodes_danmeuk.TorNodesDanMeUK.update()
+        self.assertTrue(result)
+        self.assertTrue(TorDanMeUKNode.objects.exists())
 
     @if_mock_connections(
         patch(
@@ -167,9 +199,11 @@ class CronTests(CustomTestCase):
         ),
     )
     def test_tweetfeed_updater(self, mock_get=None):
-        tweetfeeds.TweetFeeds.update()
-        location, _ = tweetfeeds.TweetFeeds.location()
-        self.assertTrue(os.path.exists(location))
+        from api_app.analyzers_manager.models import TweetFeedItem
+
+        result = tweetfeeds.TweetFeeds.update()
+        self.assertTrue(result)
+        self.assertTrue(TweetFeedItem.objects.exists())
 
     @if_mock_connections(
         patch(
@@ -201,27 +235,27 @@ class CronTests(CustomTestCase):
                         "device": None,
                         "os": None,
                         "user_agent_string": """Mozilla/5.0
-                                (Windows NT 10.0; Win64; x64)
-                                AppleWebKit/537.36 (KHTML, like Gecko)
-                                Chrome/125.0.0.0
-                                Safari/537.36""",
+                            (Windows NT 10.0; Win64; x64)
+                            AppleWebKit/537.36 (KHTML, like Gecko)
+                            Chrome/125.0.0.0
+                            Safari/537.36""",
                         "certificate_authority": None,
                         "observation_count": 1,
                         "verified": False,
                         "notes": None,
                         "ja4_fingerprint": """t13d1517h2_
-                                8daaf6152771_
-                                b0da82dd1658""",
+                            8daaf6152771_
+                            b0da82dd1658""",
                         "ja4_fingerprint_string": """t13d1517h2_002f,0035,009c,
-                                009d,1301,1302,1303,c013,c014,c02b,c02c,c02f,c030,cca8,
-                                cca9_0005,000a,000b,000d,0012,0017,001b,0023,0029,002b,
-                                002d,0033,4469,fe0d,ff01_0403,0804,0401,
-                                0503,0805,0501,0806,0601""",
+                            009d,1301,1302,1303,c013,c014,c02b,c02c,c02f,c030,cca8,
+                            cca9_0005,000a,000b,000d,0012,0017,001b,0023,0029,002b,
+                            002d,0033,4469,fe0d,ff01_0403,0804,0401,
+                            0503,0805,0501,0806,0601""",
                         "ja4s_fingerprint": None,
                         "ja4h_fingerprint": """ge11cn20enus_
-                                60ca1bd65281_
-                                ac95b44401d9_
-                                8df6a44f726c""",
+                            60ca1bd65281_
+                            ac95b44401d9_
+                            8df6a44f726c""",
                         "ja4x_fingerprint": None,
                         "ja4t_fingerprint": None,
                         "ja4ts_fingerprint": None,
@@ -230,11 +264,13 @@ class CronTests(CustomTestCase):
                 ],
                 200,
             ),
-        ),
+        )
     )
     def test_ja4_db_updater(self, mock_get=None):
         ja4_db.Ja4DB.update()
-        self.assertTrue(os.path.exists(ja4_db.Ja4DB.location()))
+        from api_app.analyzers_manager.models import Ja4DBEntry
+
+        self.assertTrue(Ja4DBEntry.objects.exists())
 
     def test_quark_updater(self):
         from quark.config import DIR_PATH
@@ -242,9 +278,34 @@ class CronTests(CustomTestCase):
         quark_engine.QuarkEngine.update()
         self.assertTrue(os.path.exists(DIR_PATH))
 
-    def test_yara_updater(self):
-        yara_scan.YaraScan.update()
-        self.assertTrue(len(os.listdir(settings.YARA_RULES_PATH)))
+    @if_mock_connections(
+        patch("git.Repo"),
+        patch("requests.get", return_value=MockUpResponse({}, 200)),
+        patch("zipfile.ZipFile"),
+    )
+    def test_yara_updater(self, mock_zipfile=None, mock_get=None, mock_repo=None):
+        if mock_zipfile is None or mock_get is None or mock_repo is None:
+            yara_scan.YaraScan.update()
+            self.assertTrue(os.path.isdir(settings.YARA_RULES_PATH))
+        else:
+
+            def create_yara_file(path):
+                os.makedirs(path, exist_ok=True)
+                yara_file = os.path.join(path, "test_rule.yar")
+                with open(yara_file, "w", encoding="utf_8") as f:
+                    f.write(
+                        "rule TestRule {\n"
+                        "    strings:\n"
+                        '        $test = "test"\n'
+                        "    condition:\n"
+                        "        $test\n"
+                        "}\n"
+                    )
+
+            mock_repo.clone_from.side_effect = lambda url, path, **kwargs: create_yara_file(path)
+            mock_zipfile.return_value.extractall.side_effect = create_yara_file
+            result = yara_scan.YaraScan.update()
+            self.assertTrue(result)
 
     @if_mock_connections(
         patch(

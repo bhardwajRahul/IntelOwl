@@ -76,6 +76,16 @@ jobs:
           cp docker/env_file_app_template docker/env_file_app
           cp docker/env_file_postgres_template docker/env_file_postgres
 
+      - name: Set image repo
+        run: echo "IMAGE_REPO=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Startup script launch (Slow)
         if: contains(github.base_ref, 'master')
         run: |
@@ -96,7 +106,7 @@ jobs:
           BUILDKIT_PROGRESS: "plain"
           STAGE: "ci"
           REPO_DOWNLOADER_ENABLED: false
-
+          
       - name: Docker debug
         if: always()
         run: |

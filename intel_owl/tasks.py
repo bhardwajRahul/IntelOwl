@@ -21,6 +21,7 @@ from django_celery_beat.models import PeriodicTask
 from elasticsearch.helpers import bulk
 
 from api_app.choices import ReportStatus, Status
+from api_app.helpers import mask_recursive
 from intel_owl import secrets
 from intel_owl.celery import app, get_queue_name
 from intel_owl.settings._util import get_environment
@@ -38,7 +39,7 @@ class FailureLoggedRequest(Request):
     def on_failure(self, exc_info, send_failed_event=True, return_ok=False):
         logger.critical(
             f"Failure detected for task {self.task.name}"
-            f" with exception {exc_info} and request {self._request_dict}"
+            f" with exception {exc_info} and request {mask_recursive(self._request_dict)}"
         )
         return super().on_failure(exc_info, send_failed_event=send_failed_event, return_ok=return_ok)
 
@@ -88,13 +89,17 @@ def remove_old_jobs():
     num_jobs_to_delete = old_jobs.count()
     logger.info(f"found {num_jobs_to_delete} old jobs to delete")
     for old_job in old_jobs.iterator():
+        analyzable = old_job.analyzable
         # if the job that we are going to delete is the last one, and it has a file
-        if old_job.analyzable.jobs.count() == 1 and old_job.analyzable.file:
-            old_job.analyzable.file.delete()
+        if analyzable.jobs.count() == 1 and analyzable.file:
+            analyzable.file.delete()
         try:
             old_job.delete()
         except Job.DoesNotExist as e:
             logger.warning(f"job {old_job.id} does not exist. Err: {e}", stack_info=True)
+        # clean up orphaned analyzable if no jobs reference it anymore
+        if not analyzable.jobs.exists():
+            analyzable.delete()
 
     logger.info("finished remove_old_jobs")
     return num_jobs_to_delete
