@@ -13,6 +13,13 @@ const versionText = VERSION;
 const logoBgImg = `url('${PUBLIC_URL}/logo-negative.png')`;
 const blogPosts = [
   {
+    title:
+      "Important update on the Current Mantainers and Future of the Project",
+    subText: "Matteo Lodi's discussion on Github",
+    date: "17th April 2026",
+    link: "https://github.com/intelowlproject/IntelOwl/discussions/3654",
+  },
+  {
     title: "IntelOwl: Open-source threat intelligence management",
     subText: "HelpNetSecurity: Interview with Matteo Lodi",
     date: "14th August 2024",
@@ -29,12 +36,6 @@ const blogPosts = [
     subText: "The Honeynet Workshop: Denmark 2024",
     date: "29th May 2024",
     link: "https://github.com/intelowlproject/thp_workshop_2024",
-  },
-  {
-    title: "New year, new tool: Intel Owl",
-    subText: "Certego Blog: First announcement",
-    date: "2nd January 2020",
-    link: "https://www.certego.net/en/news/new-year-new-tool-intel-owl/",
   },
 ];
 
